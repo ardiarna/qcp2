@@ -1,0 +1,534 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<link rel="stylesheet" type="text/css" href="assets/libs/dhtmlx/dhtmlx.css"/>
+	<script  src="assets/libs/dhtmlx/dhtmlx.js"></script>	
+	<script  src="assets/js/util.js"></script>	
+	<style>
+     html, body {
+        width: 100%;
+		height: 100%;
+		overflow: hidden;
+		margin: 0px;
+		background-color: #EBEBEB;
+     }
+	div.dhxform_item_label_left.button_width div.dhxform_btn_txt {
+			padding-left: 0px;
+			padding-right: 0px;
+			margin: 0px 0px 0px 0px;
+		}
+		
+  </style>
+  <script >
+ 
+var myGrid,myLayout,myToolbar,myWins,w1,pWins,pW,pGrid,con,acc;
+var dhxWins, w1,myForm,formStructure,myLayout2,tgl1,tgl2;
+var frm="FrmMutasiBarangProc.php"; 
+var d = new Date();
+var today = getFormattedDate(d);
+var today1 = getFormattedDate1(d);
+var today2 = getFormattedDate(d);
+
+function doOnLoad() {
+
+    myLayout = new dhtmlXLayoutObject(document.body, "1C");
+	myLayout.cells("a").hideHeader();
+	
+	myLayout2 = myLayout.cells("a").attachLayout({
+				pattern: "2E",
+				cells: [
+					{id: "a", text: "Filter",height:90},
+					{id: "b", text: "inner layout b",header:false}
+				]
+			});
+//	myToolbar = myLayout.cells("b").attachToolbar();
+/*
+	myToolbar.setIconsPath("assets/imgs/");
+	    myToolbar.addButton("new", 0,  "Add","new.gif", "new_dis.gif");
+		myToolbar.addSeparator("sep1", 1);
+		myToolbar.addButton("edit", 2, "Edit", "edit1.gif", "edit1_dis.gif");
+		myToolbar.addSeparator("sep2", 3);
+		myToolbar.addButton("del", 4,  "Delete", "delete.png", "del.jpg");
+		myToolbar.addSeparator("sep3", 5);
+		myToolbar.addButton("print", 6, "Print", "print.gif", "print_dis.gif");
+		myToolbar.addSeparator("sep4", 7);
+		myToolbar.addSpacer("sep4");
+		myToolbar.addButton("close", 8, "", "refresh1.png", "refresh1.png");
+		
+		myToolbar.attachEvent("onClick", function(id) {
+			if (id=="new"){
+					add();
+				} else if (id=="edit"){
+					edit();
+				} else if (id=="del"){
+					del();
+				}else if (id=="print"){
+					myGrid.toExcel('assets/libs/dhtmlx/grid-excel-php/generate.php');
+				}else if (id=="close"){
+			myGrid.clearAll();		
+					myGrid.loadXML(frm+"?mode=view");
+				}
+		});
+	*/	 
+
+var formSearch = [
+			{type: "settings", position: "label-left",labelWidth: 70,inputWidth: 160},
+			{type:"calendar", offsetLeft:20, name: "periode1", button: "calendar_icon",value: today1,readonly:true,dateFormat: "%Y-%m-%d",label:"Periode : ",calendarPosition: "right",inputWidth: 100},
+			{type:"newcolumn"},
+			{type:"calendar", offsetLeft:20,labelWidth: 40,name: "periode2", button: "calendar_icon"
+			,value: today2,readonly:true,dateFormat: "%Y-%m-%d",label:"s/d : ",calendarPosition: "right",inputWidth: 100},
+			{type:"newcolumn"},
+			{type:"combo",offsetLeft:30,name: "plant", label:"Plant : ",inputWidth: 60,required: true,options: [
+							{text: "A",value:"A"},
+							{text: "B",value:"B"},
+							{text: "C",value:"C"},
+			]},
+			{type:"newcolumn"},
+			{type: "button",offsetLeft:30, name: "search",value: "Search.."},
+			{type:"newcolumn"},
+			{type: "button",offsetLeft:30, name: "exp",value: "Excel.."},
+		//	{type:"newcolumn"},
+		//	{type: "button",offsetLeft:30, name: "prtvcr",value: "Print Voucher"}
+			];	
+			myFormSearch = myLayout2.cells("a").attachForm(formSearch);
+			myFormSearch.getInput("periode1").style.backgroundImage = "url(common/calendar.gif)";
+			myFormSearch.getInput("periode1").style.backgroundPosition = "center right";
+			myFormSearch.getInput("periode1").style.backgroundRepeat = "no-repeat";
+			myFormSearch.getInput("periode2").style.backgroundImage = "url(common/calendar.gif)";
+			myFormSearch.getInput("periode2").style.backgroundPosition = "center right";
+			myFormSearch.getInput("periode2").style.backgroundRepeat = "no-repeat";
+			
+			myFormSearch.attachEvent("onButtonClick",function(id){
+			if(id="search"){
+				pl = myFormSearch.getItemValue("plant");
+				tgl1 = getFormattedDate(myFormSearch.getItemValue("periode1"));
+				tgl2 = getFormattedDate(myFormSearch.getItemValue("periode2"));
+				myGrid.clearAll();
+				myGrid.loadXML(frm+"?mode=view&pl="+pl+"&tgl1="+tgl1+"&tgl2="+tgl2,cfv1);
+			} else {
+				myGrid.toExcel('assets/libs/dhtmlx/grid-excel-php/generate.php');
+			}
+			});
+	
+		myGrid = myLayout2.cells("b").attachGrid();
+		myGrid.setImagePath("assets/libs/dhtmlx/imgs/");
+		myGrid.setHeader("No.,Kode Barang,Nama,Size,Shade,Quality,Saldo Awal,Masuk,#cspan,#cspan,#cspan,#cspan,#cspan,#cspan,Keluar,#cspan,#cspan,#cspan,#cspan,#cspan,#cspan,#cspan,#cspan,Saldo Akhir",null,["text-align:center;","text-align:center;"]);
+		myGrid.attachHeader(["#rspan","#rspan","#rspan","#rspan","#rspan","#rspan","#rspan","Produksi","Afiliasi","Retur","Upgrade","Mutasi","Opname","Total","Jual","Afiliasi","FOC","Sample","Pecah","Downgrade","Mutasi","Opname","Total"]);
+		myGrid.setColTypes("ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro");
+		myGrid.setInitWidths("40,120,200,70,70,70,80,70,70,70,70,70,70,70,70,70,70,70,70,70,70,70,70,90");
+		myGrid.setColAlign("center,center,center,center,center,center,right,right,right,right,right,right,right,right,right,right,right,right,right,right,right,right,right,right,right,right,right,right");
+		myGrid.setColSorting("int,str,str,str,str,str,str,str,str,str,str,str,str,str,str");//set sorting
+		myGrid.attachHeader(",#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter");
+		myGrid.attachFooter("Total :,#cspan,#cspan,#cspan,#cspan,#cspan,<div id='jumqty'>0</div>,<div id='jumqty1'>0</div>,<div id='jumqty2'>0</div>,<div id='jumqty3'>0</div>,<div id='jumqty4'>0</div>,<div id='jumqty5'>0</div>,<div id='jumqty6'>0</div>,<div id='jumqty7'>0</div>,<div id='jumqty8'>0</div>,<div id='jumqty9'>0</div>,<div id='jumqty10'>0</div>,<div id='jumqty11'>0</div>,<div id='jumqty12'>0</div>,<div id='jumqty13'>0</div>,<div id='jumqty14'>0</div>,<div id='jumqty15'>0</div>,<div id='jumqty16'>0</div>,<div id='jumqty17'>0</div>"
+		,["text-align:right;","text-align:right;","text-align:right;","text-align:right;","text-align:right;","text-align:right;","text-align:right;","text-align:right;","text-align:right;","text-align:right;","text-align:right;","text-align:right;","text-align:right;","text-align:right;","text-align:right;","text-align:right;","text-align:right;","text-align:right;","text-align:right;","text-align:right;","text-align:right;","text-align:right;","text-align:right;","text-align:right;","text-align:right;","text-align:right;"]);
+		
+		myGrid.attachEvent("onXLS",function(){ myLayout.progressOn();});
+		myGrid.attachEvent("onXLE",function(){ myLayout.progressOff()});
+		myGrid.enableSmartRendering(true, 100);
+		myGrid.init();
+		//myGrid.loadXML(frm+"?mode=view");		
+};
+function formatNumber (num) {
+    return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,")
+}
+
+function sumc1(nn){
+			var out = 0;
+				for(var i=0;i<myGrid.getRowsNum();i++){
+					out+= parseFloat(myGrid.cells2(i,nn).getValue())
+				}
+				return out;
+			
+}
+
+function cfv1(stage){
+			if(stage && stage!=2)
+				return true;
+			var n1 = document.getElementById("jumqty");n1.innerHTML = formatNumber(sumc1(6));
+			var n2 = document.getElementById("jumqty1");n2.innerHTML = formatNumber(sumc1(7));
+			var n3 = document.getElementById("jumqty2");n3.innerHTML = formatNumber(sumc1(8));
+			var n4 = document.getElementById("jumqty3");n4.innerHTML = formatNumber(sumc1(9));
+			var n5 = document.getElementById("jumqty4");n5.innerHTML = formatNumber(sumc1(10));
+			var n6 = document.getElementById("jumqty5");n6.innerHTML = formatNumber(sumc1(11));
+			var n7 = document.getElementById("jumqty6");n7.innerHTML = formatNumber(sumc1(12));
+			var n8 = document.getElementById("jumqty7");n8.innerHTML = formatNumber(sumc1(13));
+			var n9 = document.getElementById("jumqty8");n9.innerHTML = formatNumber(sumc1(14));
+			var n10 = document.getElementById("jumqty9");n10.innerHTML = formatNumber(sumc1(15));
+			var n11 = document.getElementById("jumqty10");n11.innerHTML = formatNumber(sumc1(16));
+			var n12 = document.getElementById("jumqty11");n12.innerHTML = formatNumber(sumc1(17));
+			var n13 = document.getElementById("jumqty12");n13.innerHTML = formatNumber(sumc1(18));
+			var n14 = document.getElementById("jumqty13");n14.innerHTML = formatNumber(sumc1(19));
+			var n15 = document.getElementById("jumqty14");n15.innerHTML = formatNumber(sumc1(20));
+			var n16 = document.getElementById("jumqty15");n16.innerHTML = formatNumber(sumc1(21));
+			var n17 = document.getElementById("jumqty16");n17.innerHTML = formatNumber(sumc1(22));
+			var n18 = document.getElementById("jumqty17");n18.innerHTML = formatNumber(sumc1(23));
+			return true;
+}
+
+
+function print(){
+	kdcust = myFormSearch.getItemValue("kdcust");
+				nmar = myFormSearch.getItemValue("nmcust");
+								brs = myFormSearch.getItemValue("baris");
+				if(kdcust=="") {
+						dhtmlx.alert({title: comapp,type:"alert-warning",text:"Pilih Area terlebih dahulu"});
+						return false;
+				} else {
+	dhxWins = new dhtmlXWindows();
+	var wprint = dhxWins.createWindow("wprint", 0,0, 800,440);
+		wprint.centerOnScreen();
+		wprint.setText("Print Lokasi Pallet");
+		wprint.button("park").hide();
+		wprint.setModal(true);
+		wprint.allowResize();
+		wprint.maximize();
+		wprint.attachURL(frm+"?mode=cetak&kd="+kdcust+"&brs="+brs+"&nmar="+nmar+"&pl="+pl);	
+		}
+}
+
+function format_supp(name, value) {return "<a href='javascript:void(0);' onclick='coasupp();'><img border='0' src='assets/imgs/search1.png' width='22' height='25'></a></div>";}
+
+function add(){ cwin("new"); }
+
+function coasupp() {VGrpCust('d');}
+
+function VGrpCust(id){
+	pWins = new dhtmlXWindows();
+	pW = pWins.createWindow("w1", 0,0, 600,300);
+	pW.centerOnScreen();
+	pW.setText("Daftar Area");
+
+	pW.button("park").hide();
+	pW.setModal(true);
+	pW.button("minmax1").hide();
+	
+		pGrid = pW.attachGrid();
+		pGrid.setImagePath("assets/libs/dhtmlx/imgs/");
+
+			pGrid.setHeader("No,Kode,Nama Area",null,["text-align:center;","text-align:center;"]); 
+			pGrid.setColTypes("ro,ro,ro"); 
+			pGrid.setInitWidths("40,100,*");
+			pGrid.attachHeader(",#text_filter,#text_filter,#text_filter,#text_filter,#text_filter");
+		pGrid.setColAlign("center,center,left");
+		pGrid.setColSorting("str,str,str");
+		
+		pGrid.attachEvent("onXLS",function(){ myLayout.progressOn();});
+		pGrid.attachEvent("onXLE",function(){ myLayout.progressOff()});
+		pGrid.init();	
+			
+		pl = myFormSearch.getItemValue("plant");
+		pGrid.loadXML(frm+"?mode=dtarea&pl="+pl);
+	
+		pGrid.attachEvent("onRowDblClicked", function(rId,cInd){
+		
+		var nid=rId;
+		var nm=pGrid.cells(pGrid.getSelectedId(),2).getValue();
+				myFormSearch.setItemValue("kdcust",nid);
+				myFormSearch.setItemValue("nmcust",nm);
+				//alert(nid);
+				myFormSearch.getCombo("baris").clearAll();
+				myFormSearch.getCombo("baris").load(frm+"?mode=cbosat&kd="+nid+"&pl="+pl);
+				//myFormSearch.setItemValue("satbrg","1");
+				myFormSearch.getCombo("baris").selectOption(1);
+				pW.close();
+	});  
+}
+function frmopn(){
+formData = [
+				{type: "settings", position: "label-left", labelWidth: 120, inputWidth: 400},
+				{type: "block", inputWidth: "auto", offsetTop: 12, list: [
+					{type: "input", name: "nopallet",label: "No.Pallet :",maxLength: 17,style:"text-transform: uppercase; font-size: 40px !important;"},
+					{type: "input", name: "nolokasi",label: "Lokasi :",maxLength: 8,style:"text-transform: uppercase; font-size: 40px !important;"},
+					{type: "label", label: "Detail Pallet"},
+					{type: "input", name: "kdmotif",label: "Kode Barang :",readonly:true},
+					{type: "input", name: "motif",label: "Motif :",readonly:true},
+					{type: "input", name: "qua",label: "Qualitas :",readonly:true},
+					{type: "input", name: "shad",label: "Shading :",readonly:true},
+					{type: "input", name: "size",label: "Size :",readonly:true},
+					{type: "input", name: "qty",label: "Qty :"},
+					]}
+			];
+			
+		myForm = myLayout.cells("a").attachForm(formData);	
+			myForm.setFocusOnFirstActive("nopallet");
+			myForm.setFontSize("16px");
+			
+					
+			myForm.attachEvent("onKeyUp",function(inp, ev, id,value){
+				if(id=="nopallet" || id=="nolokasi"){
+			myForm.setItemValue(id,myForm.getItemValue(id).toUpperCase());
+		}
+			
+			if(id=="nopallet"){
+					var pjg=myForm.getItemValue(id).length;
+					
+					if(pjg==17){
+						var ind2=myForm.getItemValue(id);
+						myForm.load(frm+"?mode=load&kd="+ind2);
+						/*
+						window.dhx4.ajax.get(frm+"?mode=sheet1&kd="+ind2,function(loader){
+							if(loader.xmlDoc.responseText==""){
+								dhtmlx.message({ text:"No Pallet tidak ada dalam database"});
+								return false;
+							} else {
+								myForm.setItemValue("motif",loader.xmlDoc.responseText);
+							}
+						});
+						*/						
+						myForm.setItemFocus("nolokasi");
+//						myForm.setFocusOnFirstActive("nolokasi");
+					}
+			}
+			if(id=="nolokasi"){
+					var pjg2=myForm.getItemValue(id).length;
+					
+					if(pjg2==8){
+					//	alert(pjg);
+						myForm.setItemFocus("nopallet");
+//						myForm.setFocusOnFirstActive("nolokasi");
+						//myForm.clear();
+						
+						myForm.send(frm+"?mode=save", "post", function(loader, response){
+						myForm.clear();
+						myGrid.clearAll();
+//						myGrid.loadXML(frm+"?mode=view");
+						var kdcust=myFormSearch.getItemValue("kdcust");
+						myGrid.loadXML(frm+"?mode=view&kd="+kdcust);
+							/*
+							if(response=="OK"){
+								dhtmlx.alert({
+								title: comapp,
+								text:" Data Saved"});
+								w1.close();
+								myGrid.clearAll();
+								myGrid.loadXML(frm+"?mode=view");
+								} else {
+								dhtmlx.alert({
+								title: comapp,
+								type:"alert-warning",
+								text:response});
+							}
+							*/
+						});	
+						
+						
+					}
+			}
+		}); 
+}
+
+function cwin(mode){
+
+	dhxWins = new dhtmlXWindows();
+	//dhxWins.setImagePath("assets/libs/dhtmlx/imgs/");
+	var w1 = dhxWins.createWindow("w1", 0,0, 600,400);
+		w1.centerOnScreen();
+		w1.setText("Order Sheet");
+		w1.button("park").hide();
+		w1.setModal(true);
+		w1.allowResize();
+		//w1.maximize();
+
+	var formStructure = [
+	
+			{type: "settings", position: "label-left",labelAlign:"left",labelWidth: 130,inputWidth: 230,},
+			{type: "block", width: 500,offsetLeft:10, offsetTop:10,list:[
+			
+			{type: "fieldset",  name: "mydata1", label:"Detail", width:500,list:[
+					{type:"input", name: "nopo", label:"No.Order : ",inputWidth: 100,readonly:true},
+					{type:"calendar", name: "tglpo", button: "calendar_icon",readonly:true, value: today,label:"Tanggal Order : ",calendarPosition: "right",inputWidth: 100,required: true},
+				{type: "block", offsetTop:0,offsetLeft:0,width: 450,blockOffset: 0,list:[
+						{type:"input", name: "kdsh1", label:"Kode Sheet: ",inputWidth: 50,validate:"M4",required: true,maxLength: 4,style:"text-transform: uppercase;"},
+						{type:"newcolumn"},
+						{type:"input", name: "subsh", inputWidth: 250,required: true,style:"text-transform: uppercase;"},
+						
+				]},
+				{type:"input", name: "kdsh2", hidden:true,inputWidth: 100,maxLength: 8,validate:"M8"},
+				{type: "block", offsetTop:0,offsetLeft:0,width: 450,blockOffset: 0,list:[
+						{type:"input", name: "psh", label:"ukuran (mm) : ",inputWidth: 50,required: true,maxLength: 4},
+						{type:"newcolumn"},
+						{type:"input", label:"x",name: "lsh",offsetLeft:10, inputWidth: 50,labelWidth: 10,required: true,maxLength: 4},
+				]},
+				{type:"input", name: "qty", label:"Qty : ",inputWidth: 100},
+				{type:"input", name: "hrgsh", label:"Creasing : ",inputWidth: 200},
+				{type:"input", name: "ket", label:"Keterangan : ",inputWidth: 300},
+				{type:"calendar", name: "tglkrmpo", button: "calendar_icon",readonly:true,value: today,label:"Tanggal Kirim : ",calendarPosition: "right",inputWidth: 100},				
+			]},
+			{type: "fieldset",  name: "mydata2", label: "Save & Close", width:500, list:[	
+				{type: "block", offsetTop:0,offsetLeft:110,list:[
+						{type: "button", name: "save",value: "Save"},
+						{type:"newcolumn"},
+						{type: "button", name: "close",value: "Close"}
+				]}
+			]},
+			]},
+			];
+			
+//	myForm = w1.attachForm(formStructure);
+	
+	myForm = myLayout.cells("a").attachForm(formStructure);
+//			myForm.loadStruct(formStructure);
+	
+	myForm.enableLiveValidation(true);
+			
+	myForm.setFontSize("50px");
+	//myForm.hideItem("mydata1");
+	
+		myCalendar = new dhtmlXCalendarObject(myForm.getInput("tglpo"));
+	myForm.getInput("tglpo").style.backgroundImage = "url(common/calendar.gif)";
+	myForm.getInput("tglpo").style.backgroundPosition = "center right";
+	myForm.getInput("tglpo").style.backgroundRepeat = "no-repeat";
+	myCalendar1 = new dhtmlXCalendarObject(myForm.getInput("tglkrmpo"));
+		myForm.getInput("tglkrmpo").style.backgroundImage = "url(common/calendar.gif)";
+	myForm.getInput("tglkrmpo").style.backgroundPosition = "center right";
+	myForm.getInput("tglkrmpo").style.backgroundRepeat = "no-repeat";
+
+	//myForm.setFocusOnFirstActive("grpcode");
+	if(mode=="edit"){
+		//alert("Button with name "+myGrid.getSelectedId()+" was clicked");
+		myForm.setFocusOnFirstActive("grpdesc");
+		myForm.load(frm+"?mode=load&kd="+myGrid.getSelectedId());
+	};
+	
+	myForm.attachEvent("onKeyUp",function(inp, ev, id){
+		if(id=="kdsh1" || id=="kdsh2" || id=="subsh" ){
+			myForm.setItemValue(id,myForm.getItemValue(id).toUpperCase());
+		}
+	});
+	
+	myForm.attachEvent("onKeyDown",function(inp, ev, id){
+		if(id=="qty"){validateNumber(ev);}
+	});
+	
+	myForm.attachEvent("onButtonClick",function(id){
+		//alert("Button with name "+id+" was clicked");
+		if(id=="save"){
+		//alert("Button with name "+mode+" was clicked");
+			if(!myForm.validate()) {
+				dhtmlx.alert({title: comapp,type:"alert-warning",text:"Input not Complete"});
+			} else { 
+				myForm.send(frm+"?mode=save&stat="+mode+"&kd="+myGrid.getSelectedId(), "post", function(loader, response){
+					if(response=="OK"){
+							dhtmlx.alert({
+							title: comapp,
+							text:" Data Saved"});
+							w1.close();
+							myGrid.clearAll();
+							myGrid.loadXML(frm+"?mode=view");
+							} else {
+							dhtmlx.alert({
+							title: comapp,
+							type:"alert-warning",
+							text:response});
+							}
+						});
+			}
+		} else if(id=="close"){ 
+			dhtmlx.confirm({title: comapp,text:"Exit ?",ok:"Yes",cancel:"No",callback:function(index){
+				if(index){ w1.close();}
+				}
+		});
+		}
+  })
+	
+};
+
+function M4(data){
+	if (data.length < 4) {
+		dhtmlx.message({ text:"Kode Awal Sheet 4 Digit"});return false;
+	} else { 
+		window.dhx4.ajax.get(frm+"?mode=sheet1&kd="+data,function(loader){
+		if(loader.xmlDoc.responseText==""){
+			dhtmlx.message({ text:"Kode Sheet ada Kesalahan"});
+			return false;
+		} else {
+			myForm.setItemValue("subsh",loader.xmlDoc.responseText);
+		}
+	});	
+	}
+}
+
+function M8(data){
+	if (data.length < 8) {
+		dhtmlx.message({ text:"Kode Akhir Sheet 8 Digit"});return false;
+	} else { 
+		n=(data.substring(0,4)/10)
+		m=(data.substring(4,8)/10)
+		myForm.setItemValue("psh",n);
+		myForm.setItemValue("lsh",m);
+	}
+}
+
+function del(){
+	if(myGrid.getSelectedId()==null){dhtmlx.alert({title: comapp,type:"alert-warning",text:"Pilih Data Yang Akan Di Hapus.."});
+		return false;}
+			dhtmlx.confirm({
+						type:"confirm-warning",
+						title: comapp,
+						text:"Delete record "+myGrid.getSelectedId()+" ?",ok:"Yes",cancel:"No",
+						callback:
+							function(index){
+								if(index){
+								    window.dhx4.ajax.get(frm+"?mode=del&kd="+myGrid.getSelectedId(),function(loader){
+									if(loader.xmlDoc.responseText=="OK"){
+											dhtmlx.alert({
+												title: comapp,
+												text:" Data Deleted"});
+												 myGrid.clearAll();
+												 myGrid.loadXML(frm+"?mode=view");
+										} else {
+											dhtmlx.alert({
+											title: comapp,
+											type:"alert-warning",
+											text:loader.xmlDoc.responseText});
+										}
+									});			
+								}
+							}
+			});
+};
+
+
+function edit(){
+if(myGrid.getSelectedId()==null){
+		dhtmlx.alert({title: comapp,type:"alert-warning",text:"Pilih Data Yang Akan Di Edit.."});
+	} else { cwin("edit");}
+}
+
+function validateNumber(evt) {
+    var e = evt || window.event;
+    var key = e.keyCode || e.which;
+
+    if (!e.shiftKey && !e.altKey && !e.ctrlKey &&
+    // numbers   
+    key >= 48 && key <= 57 ||
+    // Numeric keypad
+    key >= 96 && key <= 105 ||
+    // Backspace and Tab and Enter
+    key == 8 || key == 9 || key == 13 ||
+    // Home and End
+    key == 35 || key == 36 ||
+    // left and right arrows
+    key == 37 || key == 39 ||
+	
+	key == 190 || key == 110 || 
+    // Del and Ins
+    key == 46 || key == 45) {
+        // input is VALID
+ // comma, period and minus, . on keypad
+  //key == 190 || key == 188 || key == 109 || key == 110 ||
+		}
+    else {
+        // input is INVALID
+        e.returnValue = false;
+        if (e.preventDefault) e.preventDefault();
+		}
+}
+
+
+  </script>	
+    </head>
+   <body onload="doOnLoad()">
+
+   </body>
+</html> 
